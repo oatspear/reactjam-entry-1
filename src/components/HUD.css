@@ -1,0 +1,30 @@
+.hud {
+  position: fixed;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  top: 0;
+  padding-top: 16px;
+}
+
+.hud > .top-bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: .5em;
+}
+
+.hud > .top-bar > .icon-label:first-child {
+  position: relative;
+  left: -8px;
+}
+
+.hud > .top-bar > .icon-label:last-child {
+  position: relative;
+  right: -8px;
+}
+
+.hud > .notifications {
+  display: flex;
+  flex-direction: row;
+}
