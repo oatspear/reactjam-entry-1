@@ -9,6 +9,20 @@
   justify-content: space-between;
   align-items: center;
   gap: 4px;
+  position: relative;
+  left: 100vw;
+  -webkit-animation: slide-in .5s forwards;
+  -webkit-animation-delay: .5s;
+  animation: slide-in .5s forwards;
+  animation-delay: .5s;
+}
+
+@-webkit-keyframes slide-in {
+  100% { left: 0; }
+}
+
+@keyframes slide-in {
+  100% { left: 0; }
 }
 
 .notification > .icon {

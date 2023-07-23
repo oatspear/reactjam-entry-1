@@ -17,11 +17,16 @@ function App() {
     return <div>Loading...</div>
   }
 
+  const onButtonPress = () => {
+    const x = game.count > 3 ? -game.count : 1;
+    Rune.actions.increment({ amount: x });
+  };
+
   return (
     <>
       <h1>Vite + Rune</h1>
       <div className="card">
-        <button onClick={() => Rune.actions.increment({ amount: 1 })}>
+        <button onClick={onButtonPress}>
           count is {game.count}
         </button>
         <p>
@@ -29,7 +34,7 @@ function App() {
           test HMR
         </p>
       </div>
-      <HUD></HUD>
+      <HUD notifications={game.count}></HUD>
     </>
   )
 }

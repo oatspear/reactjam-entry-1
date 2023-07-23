@@ -2,9 +2,11 @@ import "./HUD.css";
 import IconLabel from "./IconLabel";
 import TaskNotification from "./TaskNotification";
 
-// interface HUDProps {}
+interface HUDProps {
+  notifications: number;
+}
 
-function HUD(): JSX.Element {
+function HUD({notifications}: HUDProps): JSX.Element {
   return (
     <div className="hud">
       <div className="top-bar">
@@ -12,8 +14,11 @@ function HUD(): JSX.Element {
         <IconLabel icon="T" label="5:00"></IconLabel>
       </div>
       <div className="notifications">
-        <TaskNotification></TaskNotification>
-        <TaskNotification></TaskNotification>
+        {
+          [...Array(notifications)].map(_i => {
+            return <TaskNotification></TaskNotification>;
+          })
+        }
       </div>
     </div>
   );
