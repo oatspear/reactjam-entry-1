@@ -27,4 +27,5 @@
 .hud > .notifications {
   display: flex;
   flex-direction: row;
+  width: 100%;
 }

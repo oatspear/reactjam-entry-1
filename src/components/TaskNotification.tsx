@@ -1,12 +1,25 @@
+import React, { useEffect, useState } from "react";
 import "./TaskNotification.css";
+import ProgressBar from "./ProgressBar";
 
-// interface TaskNotificationProps {}
+interface TaskNotificationProps {
+  type: string;
+  timer: number;
+}
 
-function TaskNotification(): JSX.Element {
+function TaskNotification({type, timer}: TaskNotificationProps): JSX.Element {
+  const [maxTime, setMaxTime] = useState(timer);
+
+  useEffect(() => {
+    setMaxTime(timer);
+  }, []);  // Empty dependencies (runs only once)
+
+  // const nodeRef = useRef(null);
+
   return (
     <div className="notification">
-      <div className="icon"></div>
-      <div className="progress-bar"></div>
+      <div className="icon">{type}</div>
+      <ProgressBar value={timer} maximum={maxTime}></ProgressBar>
     </div>
   );
 }

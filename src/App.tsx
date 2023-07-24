@@ -4,22 +4,24 @@ import { GameState } from "./logic.ts";
 import HUD from "./components/HUD.tsx";
 
 function App() {
-  const [game, setGame] = useState<GameState>()
+  const [game, setGame] = useState<GameState>();
+
   useEffect(() => {
     Rune.initClient({
-      onChange: ({ newGame }) => {
-        setGame(newGame)
+      onChange: ({ newGame, oldGame, yourPlayerId }) => {
+        setGame(newGame);
       },
-    })
-  }, [])
+    });
+  }, []);
 
   if (!game) {
-    return <div>Loading...</div>
+    return <div>Loading...</div>;
   }
 
   const onButtonPress = () => {
-    const x = game.count > 3 ? -game.count : 1;
-    Rune.actions.increment({ amount: x });
+    // const x = game.count > 3 ? -game.count : 1;
+    // Rune.actions.increment({ amount: x });
+    Rune.actions.addPendingPurchase();
   };
 
   return (
@@ -29,14 +31,11 @@ function App() {
         <button onClick={onButtonPress}>
           count is {game.count}
         </button>
-        <p>
-          Edit <code>src/App.tsx</code> or <code>src/logic.ts</code> and save to
-          test HMR
-        </p>
       </div>
-      <HUD notifications={game.count}></HUD>
+      <HUD notifications={game.clientsPurchasing} score={game.score} timer={game.timer}>
+      </HUD>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
