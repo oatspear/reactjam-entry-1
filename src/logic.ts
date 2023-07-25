@@ -2,7 +2,7 @@
 // Imports
 // -----------------------------------------------------------------------------
 
-import type { RuneClient } from "rune-games-sdk/multiplayer"
+import type { RuneClient } from "rune-games-sdk/multiplayer";
 
 // -----------------------------------------------------------------------------
 // Constants
@@ -11,8 +11,11 @@ import type { RuneClient } from "rune-games-sdk/multiplayer"
 export type TaskType = 1 | 2;
 
 
-function constTaskTypeBookPurchase() { return 1 }
-function constTaskTypeBookReturn() { return 2 }
+function constTaskTypeBookPurchase(): TaskType { return 1 }
+function constTaskTypeBookReturn(): TaskType { return 2 }
+
+
+function constMaxPendingTasks(): number { return 10 }
 
 
 // -----------------------------------------------------------------------------
@@ -85,6 +88,7 @@ export interface GameState {
   players: Record<string, PlayerState>;
   score: number;
   timer: number;
+  generatedTasks: number;
   // Pending player tasks
   tasks: Array<Task>;
   lastTaskCreatedAt: number;
@@ -118,19 +122,67 @@ function tickClientTasks(game, tasks) {
 }
 
 
-function generateNewTask(game) {
-  // use randomness to determine task type
-  // use sorted insertion based on remaining time
+function addNewTask(game: GameState, task: Task): void {
+  // sorted insertion of new task
+  const t = task.timer;
+  const tasks = game.tasks;
+  const n = tasks.length;
+  // perform small optimizations to avoid splice
+  if (n === 0) {
+    tasks.push(task);
+  } else {
+    if (tasks[n-1].timer <= t) {
+      // the new task is the last to expire
+      tasks.push(task);
+    } else if (tasks[0].timer > t) {
+      // the new task is the first to expire
+      tasks.unshift(task);
+    } else {
+      for (let i = tasks.length - 2; i >= 0; --i) {
+        if (tasks[i].timer <= t) {
+          // this task will expire sooner than the new one
+          // insert after this point
+          tasks.splice(i+1, 0, task);
+          return;
+        }
+      }
+    }
+  }
 }
 
 
-function onGameTick(game) {
-  game.timer--;
+function generateNewTask(game: GameState): void {
+  // prevent overflowing the game with tasks
+  if (game.tasks.length > constMaxPendingTasks()) { return }
 
+  // use randomness to determine whether a new task will be generated
+  // use number of players and game.lastTaskCreatedAt to influence decision
+  const numPlayers = Object.keys(game.players).length;
+  const now = Rune.gameTimeInSeconds();
+  const reliefPeriod = (now - game.lastTaskCreatedAt) | 0;
+  const chance = 0.125 * numPlayers * reliefPeriod;
+  const r = Math.random();
+  if (r >= chance) { return }
+
+  // use randomness to determine task type
+  // use sorted insertion based on remaining time
+  const id = ++game.generatedTasks;
+  const timeout = 10 - numPlayers + 1;
+  const t = (r * 2) | 0;
+  switch (t) {
+    case constTaskTypeBookPurchase():
+      return addNewTask(game, newBookPurchase(id, timeout, 3));
+    case constTaskTypeBookReturn():
+      return addNewTask(game, newBookReturn(id, timeout, 3));
+  }
+}
+
+
+function updateTaskTimers(game: GameState): void {
   const tasks = game.tasks;
   for (let i = tasks.length - 1; i >= 0; --i) {
-    tasks[i]--;
-    if (tasks[i] < 0) {
+    tasks[i].timer--;
+    if (tasks[i].timer < 0) {
       // tasks are always sorted based on time left to complete them
       // it is safe to discard all tasks below the last expired task
       decreaseScore(game, (i+1) * 10);
@@ -138,11 +190,17 @@ function onGameTick(game) {
       break;
     }
   }
+}
 
-  // use randomness to determine whether a new task will be generated
-  // use number of players and game.lastTaskCreatedAt to influence decision
-  const now = Rune.gameTimeInSeconds();
-  const reliefPeriod = now - game.lastTaskCreatedAt;
+
+function onGameTick(game: GameState): void {
+  // update the global timer
+  game.timer--;
+
+  // update individual task timers
+  updateTaskTimers(game);
+
+  // randomly generate new tasks
   generateNewTask(game);
 }
 
@@ -160,11 +218,12 @@ Rune.initLogic({
   maxPlayers: 4,
 
   setup: (allPlayerIds: Array<string>): GameState => {
-    const state = {
+    const game: GameState = {
       count: 0,
       players: {},
       score: 0,
       timer: 300,
+      generatedTasks: 0,
       tasks: [],
       lastTaskCreatedAt: 0,
       clientsPurchasing: [],
@@ -173,25 +232,23 @@ Rune.initLogic({
       booksToReplace: [],
     };
     for (const id of allPlayerIds) {
-      state.players[id] = newPlayer(id);
+      game.players[id] = newPlayer(id);
     }
-    return state;
+    return game;
   },
 
   update: ({ game }) => {
     if (game.timer <= 0) {
+      const scores = {};
+      for (const p of Object.values(game.players)) {
+        scores[(p as PlayerState).id] = (p as PlayerState).score;
+      }
       Rune.gameOver({
-        players: Object.keys(game.players).reduce((obj, id) => {
-          obj[id] = "LOST";
-          return obj;
-        }, {}),
+        players: scores,
         delayPopUp: true,
       });
     } else {
-      // Rune.gameTimeInSeconds()
-      game.timer--;
-      tickClientTasks(game, game.clientsPurchasing);
-      tickClientTasks(game, game.clientsReturning);
+      onGameTick(game);
     }
   },
 
@@ -209,12 +266,12 @@ Rune.initLogic({
   },
 
   events: {
-    playerJoined: () => {
-      // Handle player joined
+    playerJoined: (playerId, { game }) => {
+      game.players[playerId] = newPlayer(playerId);
     },
 
-    playerLeft() {
-      // Handle player left
+    playerLeft(playerId, { game }) {
+      delete (game as GameState).players[playerId];
     },
   },
 })
