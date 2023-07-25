@@ -92,33 +92,13 @@ export interface GameState {
   // Pending player tasks
   tasks: Array<Task>;
   lastTaskCreatedAt: number;
-  clientsPurchasing: Array<number>;   // clients waiting to purchase books
-  clientsReturning: Array<number>;    // clients waiting to return books
   bookshelves: Array<Array<number>>;  // books on shelves
   booksToReplace: Array<number>;      // books to return to shelves
 }
 
-type GameActions = {
-  increment: (params: { amount: number }) => void;
-}
-
-export function getCount(game: GameState) {
-  return game.count;
-}
 
 function decreaseScore(game, amount) {
   game.score -= amount;
-}
-
-function tickClientTasks(game, tasks) {
-  for (let i = tasks.length - 1; i >= 0; --i) {
-    tasks[i]--;
-    if (tasks[i] < 0) {
-      decreaseScore(game, (i+1) * 10);
-      tasks.splice(0, i+1);
-      break;
-    }
-  }
 }
 
 
@@ -213,6 +193,10 @@ declare global {
   const Rune: RuneClient<GameState, GameActions>;
 }
 
+type GameActions = {
+  completeTask: (params: { id: string }) => void;
+}
+
 Rune.initLogic({
   minPlayers: 1,
   maxPlayers: 4,
@@ -226,8 +210,6 @@ Rune.initLogic({
       generatedTasks: 0,
       tasks: [],
       lastTaskCreatedAt: 0,
-      clientsPurchasing: [],
-      clientsReturning: [],
       bookshelves: [],
       booksToReplace: [],
     };
@@ -253,16 +235,18 @@ Rune.initLogic({
   },
 
   actions: {
-    increment: ({ amount }, { game, playerId }) => {
-      game.count += amount;
-    },
-
-    addPendingPurchase: (_nothing, {game, playerId}) => {
-      // a client that waits 10 seconds
-      game.count++;
-      game.clientsPurchasing.push(10);
-      game.tasks.push(newBookPurchase(game.count, 10, 3));
-    },
+    completeTask: ({ taskId }, { game, playerId }) => {
+      for (const i of game.tasks.keys()) {
+        const task = game.tasks[i];
+        if (task.id !== taskId) { continue }
+        // remove the completed task
+        game.tasks.splice(i, 1);
+        // add to the global and the player's score
+        game.score += 10;  // TODO
+        game.players[playerId] += 10;
+        return;
+      }
+    }
   },
 
   events: {
