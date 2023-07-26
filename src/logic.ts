@@ -10,12 +10,21 @@ import type { RuneClient } from "rune-games-sdk/multiplayer";
 
 export type TaskType = 1 | 2;
 
-
 function constTaskTypeBookPurchase(): TaskType { return 1 }
 function constTaskTypeBookReturn(): TaskType { return 2 }
 
 
+export type BookGenre = 0 | 1 | 2;
+
+function constBookGenreFantasy(): BookGenre { return 0 }
+function constBookGenrePoetry(): BookGenre { return 1 }
+function constBookGenreRomance(): BookGenre { return 2 }
+
+
+// Gameplay Constants
+
 function constMaxPendingTasks(): number { return 10 }
+function constShelfCapacity(): number { return 12 }
 
 
 // -----------------------------------------------------------------------------
@@ -30,10 +39,7 @@ export interface PlayerState {
 
 
 function newPlayer(id: string): PlayerState {
-  return {
-    id,
-    score: 0,
-  };
+  return { id, score: 0 };
 }
 
 
@@ -45,11 +51,11 @@ function newPlayer(id: string): PlayerState {
 export interface Book {
   id: number;
   author: string;
-  genre: number;
+  genre: BookGenre;
 }
 
 
-function newBook(id: number, author: string, genre: number): Book {
+function newBook(id: number, author: string, genre: BookGenre): Book {
   return { id, author, genre };
 }
 
@@ -124,7 +130,7 @@ function decreaseScore(game: GameState, amount: number) {
 function generateBook(game: GameState): Book {
   const id: number = ++game.generatedBooks;
   const r: number = Math.random();
-  const genre: number = (r * 3) | 0;
+  const genre: BookGenre = ((r * 3) | 0) as BookGenre;
   const author: string = String.fromCharCode(65 + ((r * 26) | 0));
   return newBook(id, author, genre);
 }
@@ -177,11 +183,12 @@ function generateNewTask(game: GameState): void {
   const id = ++game.generatedTasks;
   const timeout = 10 - numPlayers + 1;
   const t = (r * 2) | 0;
+  const books: Array<Book> = [generateBook(game)]  // FIXME
   switch (t) {
     case constTaskTypeBookPurchase():
-      return addNewTask(game, newBookPurchase(id, timeout, [newBook(0, "A", 1)]));
+      return addNewTask(game, newBookPurchase(id, timeout, books));
     case constTaskTypeBookReturn():
-      return addNewTask(game, newBookReturn(id, timeout, [newBook(0, "A", 1)]));
+      return addNewTask(game, newBookReturn(id, timeout, books));
   }
 }
 
