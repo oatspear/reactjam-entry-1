@@ -38,12 +38,29 @@ function newPlayer(id: string): PlayerState {
 
 
 // -----------------------------------------------------------------------------
-// Client Tasks
+// Books
+// -----------------------------------------------------------------------------
+
+
+export interface Book {
+  id: number;
+  author: string;
+  genre: number;
+}
+
+
+function newBook(id: number, author: string, genre: number): Book {
+  return { id, author, genre };
+}
+
+
+// -----------------------------------------------------------------------------
+// Player Tasks
 // -----------------------------------------------------------------------------
 
 
 export interface Task {
-  id: string;
+  id: number;
   type: TaskType;
   timeout: number;
   timer: number;
@@ -51,13 +68,13 @@ export interface Task {
 
 
 export interface BookTask extends Task {
-  books: number;
+  books: Array<Book>;
 }
 
 
-function newBookPurchase(num: number, timeout: number, books: number): BookTask {
+function newBookPurchase(id: number, timeout: number, books: Array<Book>): BookTask {
   return {
-    id: num.toString(),
+    id,
     type: constTaskTypeBookPurchase(),
     timeout,
     timer: timeout,
@@ -66,9 +83,9 @@ function newBookPurchase(num: number, timeout: number, books: number): BookTask 
 }
 
 
-function newBookReturn(num: number, timeout: number, books: number): BookTask {
+function newBookReturn(id: number, timeout: number, books: Array<Book>): BookTask {
   return {
-    id: num.toString(),
+    id,
     type: constTaskTypeBookReturn(),
     timeout,
     timer: timeout,
@@ -89,16 +106,27 @@ export interface GameState {
   score: number;
   timer: number;
   generatedTasks: number;
+  generatedBooks: number;
   // Pending player tasks
   tasks: Array<Task>;
   lastTaskCreatedAt: number;
-  bookshelves: Array<Array<number>>;  // books on shelves
-  booksToReplace: Array<number>;      // books to return to shelves
+  // Books and bookshelves
+  bookshelves: Array<number>;     // one shelf per book type, with book count
+  booksToReplace: Array<number>;  // books to return to shelves (array of book type)
 }
 
 
-function decreaseScore(game, amount) {
+function decreaseScore(game: GameState, amount: number) {
   game.score -= amount;
+}
+
+
+function generateBook(game: GameState): Book {
+  const id: number = ++game.generatedBooks;
+  const r: number = Math.random();
+  const genre: number = (r * 3) | 0;
+  const author: string = String.fromCharCode(65 + ((r * 26) | 0));
+  return newBook(id, author, genre);
 }
 
 
@@ -151,9 +179,9 @@ function generateNewTask(game: GameState): void {
   const t = (r * 2) | 0;
   switch (t) {
     case constTaskTypeBookPurchase():
-      return addNewTask(game, newBookPurchase(id, timeout, 3));
+      return addNewTask(game, newBookPurchase(id, timeout, [newBook(0, "A", 1)]));
     case constTaskTypeBookReturn():
-      return addNewTask(game, newBookReturn(id, timeout, 3));
+      return addNewTask(game, newBookReturn(id, timeout, [newBook(0, "A", 1)]));
   }
 }
 
@@ -197,6 +225,13 @@ type GameActions = {
   completeTask: (params: { id: string }) => void;
 }
 
+type RuneCallbackParam = {
+  game: GameState;
+  playerId: string;
+}
+
+type NumericIdParam = { id: number }
+
 Rune.initLogic({
   minPlayers: 1,
   maxPlayers: 4,
@@ -208,6 +243,7 @@ Rune.initLogic({
       score: 0,
       timer: 300,
       generatedTasks: 0,
+      generatedBooks: 0,
       tasks: [],
       lastTaskCreatedAt: 0,
       bookshelves: [],
@@ -219,11 +255,12 @@ Rune.initLogic({
     return game;
   },
 
-  update: ({ game }) => {
+  update: ({ game }: RuneCallbackParam) => {
     if (game.timer <= 0) {
-      const scores = {};
+      const scores: Record<string, number> = {};
       for (const p of Object.values(game.players)) {
-        scores[(p as PlayerState).id] = (p as PlayerState).score;
+        const player = p as PlayerState;
+        scores[player.id] = player.score;
       }
       Rune.gameOver({
         players: scores,
@@ -235,26 +272,26 @@ Rune.initLogic({
   },
 
   actions: {
-    completeTask: ({ taskId }, { game, playerId }) => {
+    completeTask: ({ id }: NumericIdParam, { game, playerId }: RuneCallbackParam) => {
       for (const i of game.tasks.keys()) {
         const task = game.tasks[i];
-        if (task.id !== taskId) { continue }
+        if (task.id !== id) { continue }
         // remove the completed task
         game.tasks.splice(i, 1);
         // add to the global and the player's score
         game.score += 10;  // TODO
-        game.players[playerId] += 10;
+        game.players[playerId].score += 10;
         return;
       }
     }
   },
 
   events: {
-    playerJoined: (playerId, { game }) => {
+    playerJoined: (playerId: string, { game }: RuneCallbackParam) => {
       game.players[playerId] = newPlayer(playerId);
     },
 
-    playerLeft(playerId, { game }) {
+    playerLeft(playerId: string, { game }: RuneCallbackParam) {
       delete (game as GameState).players[playerId];
     },
   },
