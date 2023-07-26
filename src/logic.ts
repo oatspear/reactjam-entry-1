@@ -20,6 +20,10 @@ function constBookGenreFantasy(): BookGenre { return 0 }
 function constBookGenrePoetry(): BookGenre { return 1 }
 function constBookGenreRomance(): BookGenre { return 2 }
 
+function allBookGenres(): Array<BookGenre> {
+  return [0, 1, 2];
+}
+
 
 // Gameplay Constants
 
@@ -57,6 +61,18 @@ export interface Book {
 
 function newBook(id: number, author: string, genre: BookGenre): Book {
   return { id, author, genre };
+}
+
+
+export interface Bookshelf {
+  genre: BookGenre;
+  books: Array<Book>;
+  lastSortedAt: number;
+}
+
+
+function newBookShelf(genre: BookGenre): Bookshelf {
+  return { genre, books: [], lastSortedAt: 0 };
 }
 
 
@@ -117,13 +133,8 @@ export interface GameState {
   tasks: Array<Task>;
   lastTaskCreatedAt: number;
   // Books and bookshelves
-  bookshelves: Array<number>;     // one shelf per book type, with book count
-  booksToReplace: Array<number>;  // books to return to shelves (array of book type)
-}
-
-
-function decreaseScore(game: GameState, amount: number) {
-  game.score -= amount;
+  bookshelves: Array<Bookshelf>;
+  lostBooks: Array<Book>;  // books to put back on shelves
 }
 
 
@@ -193,6 +204,23 @@ function generateNewTask(game: GameState): void {
 }
 
 
+function processFailedTask(game: GameState, task: Task): void {
+  let penalty: number = 0;
+
+  switch (task.type) {
+    case constTaskTypeBookPurchase():
+      // all books the client was holding must now be put back on shelves
+      game.lostBooks = game.lostBooks.concat((task as BookTask).books);
+      break;
+
+    case constTaskTypeBookReturn():
+      // apply a score penalty
+      penalty = 10;
+      break;
+  }
+}
+
+
 function updateTaskTimers(game: GameState): void {
   const tasks = game.tasks;
   for (let i = tasks.length - 1; i >= 0; --i) {
@@ -200,8 +228,10 @@ function updateTaskTimers(game: GameState): void {
     if (tasks[i].timer < 0) {
       // tasks are always sorted based on time left to complete them
       // it is safe to discard all tasks below the last expired task
-      decreaseScore(game, (i+1) * 10);
-      tasks.splice(0, i+1);
+      const failedTasks: Array<Task> = tasks.splice(0, i+1);
+      for (const failedTask of failedTasks) {
+        processFailedTask(game, failedTask);
+      }
       break;
     }
   }
@@ -253,8 +283,8 @@ Rune.initLogic({
       generatedBooks: 0,
       tasks: [],
       lastTaskCreatedAt: 0,
-      bookshelves: [],
-      booksToReplace: [],
+      bookshelves: allBookGenres().map(newBookShelf),
+      lostBooks: [],
     };
     for (const id of allPlayerIds) {
       game.players[id] = newPlayer(id);
