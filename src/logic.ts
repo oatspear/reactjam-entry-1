@@ -11,7 +11,6 @@ import type { RuneClient } from "rune-games-sdk/multiplayer";
 export type TaskType = 1 | 2;
 
 function constTaskTypeBookPurchase(): TaskType { return 1 }
-function constTaskTypeBookReturn(): TaskType { return 2 }
 
 
 export type BookGenre = 0 | 1 | 2;
@@ -105,17 +104,6 @@ function newBookPurchase(id: number, timeout: number, books: Array<Book>): BookT
 }
 
 
-function newBookReturn(id: number, timeout: number, books: Array<Book>): BookTask {
-  return {
-    id,
-    type: constTaskTypeBookReturn(),
-    timeout,
-    timer: timeout,
-    books,
-  };
-}
-
-
 // -----------------------------------------------------------------------------
 // Game State
 // -----------------------------------------------------------------------------
@@ -198,24 +186,15 @@ function generateNewTask(game: GameState): void {
   switch (t) {
     case constTaskTypeBookPurchase():
       return addNewTask(game, newBookPurchase(id, timeout, books));
-    case constTaskTypeBookReturn():
-      return addNewTask(game, newBookReturn(id, timeout, books));
   }
 }
 
 
 function processFailedTask(game: GameState, task: Task): void {
-  let penalty: number = 0;
-
   switch (task.type) {
     case constTaskTypeBookPurchase():
       // all books the client was holding must now be put back on shelves
       game.lostBooks = game.lostBooks.concat((task as BookTask).books);
-      break;
-
-    case constTaskTypeBookReturn():
-      // apply a score penalty
-      penalty = 10;
       break;
   }
 }
