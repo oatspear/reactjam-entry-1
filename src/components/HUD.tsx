@@ -4,6 +4,7 @@ import IconLabel from "./IconLabel";
 import TaskNotification from "./TaskNotification";
 import "animate.css";
 import { AnimatePresence } from "framer-motion";
+import { Task } from "../logic";
 
 function secsToLabel(totalSeconds: number): string {
   const mins = (totalSeconds / 60) | 0;
@@ -13,7 +14,7 @@ function secsToLabel(totalSeconds: number): string {
 
 
 interface HUDProps {
-  notifications: Array<number>;
+  notifications: Array<Task>;
   score: number;
   timer: number;
 }
@@ -30,8 +31,8 @@ function HUD({notifications, score, timer}: HUDProps): JSX.Element {
       <div className="task-notifications">
       <AnimatePresence>
         {
-          notifications.map((secs, i) => {
-          return <TaskNotification type="S" timer={secs} key={i}></TaskNotification>
+          notifications.map(task => {
+          return <TaskNotification type="S" timer={task.timer} key={task.id}></TaskNotification>
           })
         }
         </AnimatePresence>

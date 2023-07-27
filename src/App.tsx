@@ -22,7 +22,8 @@ function App() {
   const onButtonPress = () => {
     // const x = game.count > 3 ? -game.count : 1;
     // Rune.actions.increment({ amount: x });
-    Rune.actions.addPendingPurchase();
+    if (game.tasks.length === 0) { return }
+    Rune.actions.completeTask({ id: game.tasks[0].id });
   };
 
   return (
@@ -32,9 +33,8 @@ function App() {
           count is {game.count}
         </button>
       </div>
-      <HUD notifications={game.clientsPurchasing} score={game.score} timer={game.timer}>
-      </HUD>
-    <BgInterface />
+      <HUD notifications={game.tasks} score={game.score} timer={game.timer} />
+      <BgInterface />
     </>
   );
 }
