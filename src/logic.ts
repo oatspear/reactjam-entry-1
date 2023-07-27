@@ -8,26 +8,41 @@ import type { RuneClient } from "rune-games-sdk/multiplayer";
 // Constants
 // -----------------------------------------------------------------------------
 
-export type TaskType = 1 | 2;
+export type TaskType = 1 | 2 | 3;
 
-function constTaskTypeBookPurchase(): TaskType { return 1 }
+// function constTaskTypeBookPurchase(): TaskType { return 1 }
+
+const TASK_TYPE_BOOK_PURCHASE: TaskType = 1;
+const TASK_TYPE_BOOK_SORT_GENRE: TaskType = 2;
+// const TASK_TYPE_BOOK_SORT_AUTHOR: TaskType = 3;
 
 
 export type BookGenre = 0 | 1 | 2;
 
-function constBookGenreFantasy(): BookGenre { return 0 }
-function constBookGenrePoetry(): BookGenre { return 1 }
-function constBookGenreRomance(): BookGenre { return 2 }
+// function constBookGenreFantasy(): BookGenre { return 0 }
+// function constBookGenrePoetry(): BookGenre { return 1 }
+// function constBookGenreRomance(): BookGenre { return 2 }
+
+const NUM_GENRES: number = 3;
+
+const GENRE_FANTASY: BookGenre = 0;
+const GENRE_POETRY: BookGenre = 1;
+const GENRE_ROMANCE: BookGenre = 2;
 
 function allBookGenres(): Array<BookGenre> {
-  return [0, 1, 2];
+  return [GENRE_FANTASY, GENRE_POETRY, GENRE_ROMANCE];
 }
 
 
 // Gameplay Constants
 
-function constMaxPendingTasks(): number { return 10 }
-function constShelfCapacity(): number { return 12 }
+// function constMaxPendingTasks(): number { return 10 }
+// function constShelfCapacity(): number { return 12 }
+
+const DEFAULT_TASK_ID: number = 0;
+const MAX_PENDING_TASKS: number = 10;
+const SHELF_CAPACITY: number = 30;
+const DEFAULT_BOOK_SORT_TIMER: number = 5;
 
 
 // -----------------------------------------------------------------------------
@@ -96,11 +111,39 @@ export interface BookTask extends Task {
 function newBookPurchase(id: number, timeout: number, books: Array<Book>): BookTask {
   return {
     id,
-    type: constTaskTypeBookPurchase(),
+    type: TASK_TYPE_BOOK_PURCHASE,
     timeout,
     timer: timeout,
     books,
   };
+}
+
+
+function newSortBooksByGenre(id: number, timeout: number, books: Array<Book>): BookTask {
+  return {
+    id,
+    type: TASK_TYPE_BOOK_SORT_GENRE,
+    timeout,
+    timer: timeout,
+    books,
+  };
+}
+
+
+// function newSortBooksByAuthor(id: number, timeout: number, books: Array<Book>): BookTask {
+//   return {
+//     id,
+//     type: TASK_TYPE_BOOK_SORT_AUTHOR,
+//     timeout,
+//     timer: timeout,
+//     books,
+//   };
+// }
+
+
+function taskTimerBasedOnPlayers(game: GameState, basis: number): number {
+  const t = basis - Object.keys(game.players).length + 1;
+  return t <= 0 ? 1 : t;
 }
 
 
@@ -122,16 +165,46 @@ export interface GameState {
   lastTaskCreatedAt: number;
   // Books and bookshelves
   bookshelves: Array<Bookshelf>;
-  lostBooks: Array<Book>;  // books to put back on shelves
+  lostZone: BookTask;  // books to put back on shelves
 }
 
 
-function generateBook(game: GameState): Book {
+function generateBook(game: GameState, genre?: BookGenre): Book {
   const id: number = ++game.generatedBooks;
   const r: number = Math.random();
-  const genre: BookGenre = ((r * 3) | 0) as BookGenre;
   const author: string = String.fromCharCode(65 + ((r * 26) | 0));
+  genre = genre != null ? genre : ((r * NUM_GENRES) | 0) as BookGenre;
   return newBook(id, author, genre);
+}
+
+
+function moveBooksFromShelvesToLostZone(game: GameState): void {
+  // random integer seed
+  let r = (Math.random() * 1000000) | 0;
+  const lost: Array<Book> = game.lostZone.books;
+  for (const shelf of game.bookshelves) {
+    // move between 0-2 books per shelf
+    let howMany = r % 3;
+    if (howMany === 0 || shelf.books.length === 0) { continue }
+
+    // calculate which books to retrieve
+    let books: Array<Book> = [];
+    if (shelf.books.length <= howMany) {
+      books = shelf.books;
+      shelf.books = [];
+    } else {
+      for (; howMany > 0; howMany--) {
+        const i = r % shelf.books.length;
+        books.push(shelf.books[i]);
+        shelf.books.splice(i, 1);
+      }
+    }
+
+    // add books to the lost zone
+    lost.splice(lost.length, 0, ...books);
+    // regenerate a semi-random number
+    r = (r * 31 + 17) % 1000000;
+  }
 }
 
 
@@ -166,7 +239,7 @@ function addNewTask(game: GameState, task: Task): void {
 
 function generateNewTask(game: GameState): void {
   // prevent overflowing the game with tasks
-  if (game.tasks.length > constMaxPendingTasks()) { return }
+  if (game.tasks.length > MAX_PENDING_TASKS) { return }
 
   // use randomness to determine whether a new task will be generated
   // use number of players and game.lastTaskCreatedAt to influence decision
@@ -184,17 +257,32 @@ function generateNewTask(game: GameState): void {
   const t = (r * 2) | 0;
   const books: Array<Book> = [generateBook(game)]  // FIXME
   switch (t) {
-    case constTaskTypeBookPurchase():
+    case TASK_TYPE_BOOK_PURCHASE:
       return addNewTask(game, newBookPurchase(id, timeout, books));
   }
 }
 
 
+function processCompletedTask(game: GameState, playerId: string, task: Task): void {
+  let points: number = 0;
+  const player: PlayerState = game.players[playerId];
+  switch (task.type) {
+    case TASK_TYPE_BOOK_PURCHASE:
+      // all books the client was holding must now be put back on shelves
+      game.lostZone.books = game.lostZone.books.concat((task as BookTask).books);
+      points = 10 * (task as BookTask).books.length;
+      break;
+  }
+  game.score += points;
+  player.score += points;
+}
+
+
 function processFailedTask(game: GameState, task: Task): void {
   switch (task.type) {
-    case constTaskTypeBookPurchase():
+    case TASK_TYPE_BOOK_PURCHASE:
       // all books the client was holding must now be put back on shelves
-      game.lostBooks = game.lostBooks.concat((task as BookTask).books);
+      game.lostZone.books = game.lostZone.books.concat((task as BookTask).books);
       break;
   }
 }
@@ -214,6 +302,17 @@ function updateTaskTimers(game: GameState): void {
       break;
     }
   }
+
+  // also update the lost zone task
+  game.lostZone.timer--;
+  if (game.lostZone.timer <= 0) {
+    // calculate timers based on number of players
+    const t: number = taskTimerBasedOnPlayers(game, DEFAULT_BOOK_SORT_TIMER);
+    game.lostZone.timeout = t;
+    game.lostZone.timer = t;
+    // move some books to the lost zone
+    moveBooksFromShelvesToLostZone(game);
+  }
 }
 
 
@@ -226,6 +325,22 @@ function onGameTick(game: GameState): void {
 
   // randomly generate new tasks
   generateNewTask(game);
+}
+
+
+function generateInitialData(game: GameState): void {
+  // generate books for the shelves
+  for (const shelf of game.bookshelves) {
+    for (let i = SHELF_CAPACITY; i > 0; --i) {
+      shelf.books.push(generateBook(game, shelf.genre));
+    }
+  }
+  // move some books to the lost zone
+  moveBooksFromShelvesToLostZone(game);
+  // calculate timers based on number of players
+  const t: number = taskTimerBasedOnPlayers(game, DEFAULT_BOOK_SORT_TIMER);
+  game.lostZone.timeout = t;
+  game.lostZone.timer = t;
 }
 
 
@@ -256,11 +371,12 @@ Rune.initLogic({
       tasks: [],
       lastTaskCreatedAt: 0,
       bookshelves: allBookGenres().map(newBookShelf),
-      lostBooks: [],
+      lostZone: newSortBooksByGenre(DEFAULT_TASK_ID, 0, []),
     };
     for (const id of allPlayerIds) {
       game.players[id] = newPlayer(id);
     }
+    generateInitialData(game);
     return game;
   },
 
@@ -285,12 +401,8 @@ Rune.initLogic({
       for (const i of game.tasks.keys()) {
         const task = game.tasks[i];
         if (task.id !== id) { continue }
-        // remove the completed task
         game.tasks.splice(i, 1);
-        // add to the global and the player's score
-        game.score += 10;  // TODO
-        game.players[playerId].score += 10;
-        return;
+        return processCompletedTask(game, playerId, task);
       }
     }
   },
