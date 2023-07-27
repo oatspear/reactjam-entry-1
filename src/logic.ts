@@ -14,7 +14,7 @@ export type TaskType = 1 | 2 | 3;
 
 const TASK_TYPE_BOOK_PURCHASE: TaskType = 1;
 const TASK_TYPE_BOOK_SORT_GENRE: TaskType = 2;
-// const TASK_TYPE_BOOK_SORT_AUTHOR: TaskType = 3;
+const TASK_TYPE_BOOK_SORT_AUTHOR: TaskType = 3;
 
 
 export type BookGenre = 0 | 1 | 2;
@@ -78,18 +78,6 @@ function newBook(id: number, author: string, genre: BookGenre): Book {
 }
 
 
-export interface Bookshelf {
-  genre: BookGenre;
-  books: Array<Book>;
-  lastSortedAt: number;
-}
-
-
-function newBookShelf(genre: BookGenre): Bookshelf {
-  return { genre, books: [], lastSortedAt: 0 };
-}
-
-
 // -----------------------------------------------------------------------------
 // Player Tasks
 // -----------------------------------------------------------------------------
@@ -100,6 +88,11 @@ export interface Task {
   type: TaskType;
   timeout: number;
   timer: number;
+}
+
+
+export interface CounterTask extends Task {
+  count: number;
 }
 
 
@@ -119,32 +112,62 @@ function newBookPurchase(id: number, timeout: number, books: Array<Book>): BookT
 }
 
 
-function newSortBooksByGenre(id: number, timeout: number, books: Array<Book>): BookTask {
+function newSortBooksByGenre(): BookTask {
   return {
-    id,
+    id: DEFAULT_TASK_ID,
     type: TASK_TYPE_BOOK_SORT_GENRE,
-    timeout,
-    timer: timeout,
-    books,
+    timeout: DEFAULT_BOOK_SORT_TIMER,
+    timer: DEFAULT_BOOK_SORT_TIMER,
+    books: [],
   };
 }
 
 
-// function newSortBooksByAuthor(id: number, timeout: number, books: Array<Book>): BookTask {
-//   return {
-//     id,
-//     type: TASK_TYPE_BOOK_SORT_AUTHOR,
-//     timeout,
-//     timer: timeout,
-//     books,
-//   };
-// }
+function newSortBooksByAuthor(): CounterTask {
+  return {
+    id: DEFAULT_TASK_ID,
+    type: TASK_TYPE_BOOK_SORT_AUTHOR,
+    timeout: DEFAULT_BOOK_SORT_TIMER,
+    timer: DEFAULT_BOOK_SORT_TIMER,
+    count: 0,
+  };
+}
 
 
 function taskTimerBasedOnPlayers(game: GameState, basis: number): number {
   const t = basis - Object.keys(game.players).length + 1;
   return t <= 0 ? 1 : t;
 }
+
+
+// -----------------------------------------------------------------------------
+// Book Shelves
+// -----------------------------------------------------------------------------
+
+
+export interface Bookshelf {
+  genre: BookGenre;
+  books: Array<Book>;
+  sorting: CounterTask;
+}
+
+
+function newBookShelf(genre: BookGenre): Bookshelf {
+  return { genre, books: [], sorting: newSortBooksByAuthor() };
+}
+
+
+// function takeBooksFromShelf(shelf: Bookshelf, amount: number): Array<Book> {
+//   if (shelf.books.length <= amount) {
+//     const books = shelf.books;
+//     shelf.books = [];
+//     shelf.sorting.count = 0;
+//     return books;
+//   }
+//   const books = shelf.books.splice(-amount, amount);
+//   shelf.sorting.count = Math.min(shelf.sorting.count, shelf.books.length);
+//   return books;
+// }
 
 
 // -----------------------------------------------------------------------------
@@ -303,14 +326,19 @@ function updateTaskTimers(game: GameState): void {
     }
   }
 
+  // also update the sorting of bookshelves
+  for (const shelf of game.bookshelves) {
+    shelf.sorting.timer--;
+    if (shelf.sorting.timer <= 0) {
+      shelf.sorting.timer = shelf.sorting.timeout;
+      shelf.sorting.count++;
+    }
+  }
+
   // also update the lost zone task
   game.lostZone.timer--;
   if (game.lostZone.timer <= 0) {
-    // calculate timers based on number of players
-    const t: number = taskTimerBasedOnPlayers(game, DEFAULT_BOOK_SORT_TIMER);
-    game.lostZone.timeout = t;
-    game.lostZone.timer = t;
-    // move some books to the lost zone
+    game.lostZone.timer = game.lostZone.timeout;
     moveBooksFromShelvesToLostZone(game);
   }
 }
@@ -338,9 +366,21 @@ function generateInitialData(game: GameState): void {
   // move some books to the lost zone
   moveBooksFromShelvesToLostZone(game);
   // calculate timers based on number of players
+  regenerateTaskTimeouts(game);
+}
+
+
+function regenerateTaskTimeouts(game: GameState): void {
+  // calculate timers based on number of players
   const t: number = taskTimerBasedOnPlayers(game, DEFAULT_BOOK_SORT_TIMER);
+  // update book shelves
+  for (const shelf of game.bookshelves) {
+    shelf.sorting.timeout = t;
+    shelf.sorting.timer = Math.min(t, shelf.sorting.timer);
+  }
+  // update lost zone
   game.lostZone.timeout = t;
-  game.lostZone.timer = t;
+  game.lostZone.timer = Math.min(t, game.lostZone.timer);
 }
 
 
@@ -348,13 +388,18 @@ function generateInitialData(game: GameState): void {
 // Rune Steup
 // -----------------------------------------------------------------------------
 
+
 declare global {
   const Rune: RuneClient<GameState, GameActions>;
 }
 
+
 type GameActions = {
   completeTask: (params: { id: number }) => void;
+  sortBookshelf: (params: { genre: BookGenre }) => void;
+  sortLostZone: (params: { amount: number }) => void;
 }
+
 
 Rune.initLogic({
   minPlayers: 1,
@@ -371,7 +416,7 @@ Rune.initLogic({
       tasks: [],
       lastTaskCreatedAt: 0,
       bookshelves: allBookGenres().map(newBookShelf),
-      lostZone: newSortBooksByGenre(DEFAULT_TASK_ID, 0, []),
+      lostZone: newSortBooksByGenre(),
     };
     for (const id of allPlayerIds) {
       game.players[id] = newPlayer(id);
@@ -404,16 +449,36 @@ Rune.initLogic({
         game.tasks.splice(i, 1);
         return processCompletedTask(game, playerId, task);
       }
+      Rune.invalidAction();
+    },
+
+    sortBookshelf: ({ genre }, { game, playerId }) => {
+      for (const shelf of game.bookshelves) {
+        if (shelf.genre != genre) { continue }
+        return processCompletedTask(game, playerId, shelf.sorting);
+      }
+      Rune.invalidAction();
+    },
+
+    sortLostZone: ({ amount }, { game, playerId }) => {
+      if (game.lostZone.books.length >= amount) {
+        return processCompletedTask(game, playerId, game.lostZone);
+      }
+      Rune.invalidAction();
     }
   },
 
   events: {
     playerJoined: (playerId, { game }) => {
       game.players[playerId] = newPlayer(playerId);
+      // update task timers based on number of players
+      regenerateTaskTimeouts(game);
     },
 
     playerLeft(playerId, { game }) {
       delete (game as GameState).players[playerId];
+      // update task timers based on number of players
+      regenerateTaskTimeouts(game);
     },
   },
 })
