@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import { GameState } from "./logic.ts";
 import HUD from "./components/HUD.tsx";
+import BgInterface from "./components/BgInterface.tsx";
 
 function App() {
   const [game, setGame] = useState<GameState>();
@@ -26,7 +27,6 @@ function App() {
 
   return (
     <>
-      <h1>Vite + Rune</h1>
       <div className="card">
         <button onClick={onButtonPress}>
           count is {game.count}
@@ -34,6 +34,7 @@ function App() {
       </div>
       <HUD notifications={game.clientsPurchasing} score={game.score} timer={game.timer}>
       </HUD>
+    <BgInterface />
     </>
   );
 }

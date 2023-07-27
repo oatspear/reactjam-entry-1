@@ -1,10 +1,9 @@
-import React, { createRef } from "react";
+import React, { createRef, useRef } from "react";
 import "./HUD.css";
 import IconLabel from "./IconLabel";
 import TaskNotification from "./TaskNotification";
-import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import "animate.css";
-
+import { AnimatePresence } from "framer-motion";
 
 function secsToLabel(totalSeconds: number): string {
   const mins = (totalSeconds / 60) | 0;
@@ -21,14 +20,6 @@ interface HUDProps {
 
 
 function HUD({notifications, score, timer}: HUDProps): JSX.Element {
-  const transitionClasses = {
-    appear: "animate__animated",
-    appearActive: "animate__backInRight",
-    enter: "animate__animated",
-    enterActive: "animate__backInRight",
-    exit: "animate__animated",
-    exitActive: "animate__bounceOutDown"
-  };
 
   return (
     <div className="hud">
@@ -36,19 +27,15 @@ function HUD({notifications, score, timer}: HUDProps): JSX.Element {
         <IconLabel icon="S" label={score.toString()}></IconLabel>
         <IconLabel icon="T" label={secsToLabel(timer)}></IconLabel>
       </div>
-      <TransitionGroup className="notifications" appear={true}>
+      <div className="task-notifications">
+      <AnimatePresence>
         {
-          notifications.map((secs, i) =>
-            <CSSTransition
-              key={i}
-              timeout={250}
-              classNames={transitionClasses}
-            >
-              <TaskNotification type="S" timer={secs}></TaskNotification>
-            </CSSTransition>
-          )
+          notifications.map((secs, i) => {
+          return <TaskNotification type="S" timer={secs} key={i}></TaskNotification>
+          })
         }
-      </TransitionGroup>
+        </AnimatePresence>
+        </div>
     </div>
   );
 }
