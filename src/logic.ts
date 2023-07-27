@@ -259,15 +259,8 @@ declare global {
 }
 
 type GameActions = {
-  completeTask: (params: { id: string }) => void;
+  completeTask: (params: { id: number }) => void;
 }
-
-type RuneCallbackParam = {
-  game: GameState;
-  playerId: string;
-}
-
-type NumericIdParam = { id: number }
 
 Rune.initLogic({
   minPlayers: 1,
@@ -292,7 +285,7 @@ Rune.initLogic({
     return game;
   },
 
-  update: ({ game }: RuneCallbackParam) => {
+  update: ({ game }) => {
     if (game.timer <= 0) {
       const scores: Record<string, number> = {};
       for (const p of Object.values(game.players)) {
@@ -309,7 +302,7 @@ Rune.initLogic({
   },
 
   actions: {
-    completeTask: ({ id }: NumericIdParam, { game, playerId }: RuneCallbackParam) => {
+    completeTask: ({ id }, { game, playerId }) => {
       for (const i of game.tasks.keys()) {
         const task = game.tasks[i];
         if (task.id !== id) { continue }
@@ -324,11 +317,11 @@ Rune.initLogic({
   },
 
   events: {
-    playerJoined: (playerId: string, { game }: RuneCallbackParam) => {
+    playerJoined: (playerId, { game }) => {
       game.players[playerId] = newPlayer(playerId);
     },
 
-    playerLeft(playerId: string, { game }: RuneCallbackParam) {
+    playerLeft(playerId, { game }) {
       delete (game as GameState).players[playerId];
     },
   },
