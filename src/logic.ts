@@ -15,6 +15,7 @@ export interface GameState {
 
 type GameActions = {
   increment: (params: { amount: number }) => void;
+  addPendingPurchase: () => void;
 }
 
 declare global {

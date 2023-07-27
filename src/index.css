@@ -57,3 +57,9 @@ button:focus,
 button:focus-visible {
   outline: 0;
 }
+
+.task-notifications {
+  display: flex;
+  justify-content: flex-start;
+  align-items: start;
+}
