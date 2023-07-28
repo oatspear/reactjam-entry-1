@@ -12,9 +12,9 @@ export type TaskType = 1 | 2 | 3;
 
 // function constTaskTypeBookPurchase(): TaskType { return 1 }
 
-const TASK_TYPE_BOOK_PURCHASE: TaskType = 1;
-const TASK_TYPE_BOOK_SORT_GENRE: TaskType = 2;
-const TASK_TYPE_BOOK_SORT_AUTHOR: TaskType = 3;
+export const TASK_TYPE_BOOK_PURCHASE: TaskType = 1;
+export const TASK_TYPE_BOOK_SORT_GENRE: TaskType = 2;
+export const TASK_TYPE_BOOK_SORT_AUTHOR: TaskType = 3;
 
 
 export type BookGenre = 0 | 1 | 2;
@@ -25,9 +25,9 @@ export type BookGenre = 0 | 1 | 2;
 
 const NUM_GENRES: number = 3;
 
-const GENRE_FANTASY: BookGenre = 0;
-const GENRE_POETRY: BookGenre = 1;
-const GENRE_ROMANCE: BookGenre = 2;
+export const GENRE_FANTASY: BookGenre = 0;
+export const GENRE_POETRY: BookGenre = 1;
+export const GENRE_ROMANCE: BookGenre = 2;
 
 function allBookGenres(): Array<BookGenre> {
   return [GENRE_FANTASY, GENRE_POETRY, GENRE_ROMANCE];
@@ -266,8 +266,9 @@ function generateNewTasks(game: GameState): void {
   // use sorted insertion based on remaining time
   const id = ++game.generatedTasks;
   const timeout = 10 - numPlayers + 1;
-  const amount = randomInt() % 3 + 1;
+  const amount = 3;
   addNewTask(game, newBookPurchase(id, timeout, amount));
+  game.lastTaskCreatedAt = now;
   // const t = (r * 2) | 0;
   // switch (t) {
   //   case TASK_TYPE_BOOK_PURCHASE:
@@ -406,6 +407,7 @@ type GameActions = {
   completeTask: (params: { taskId: number }) => void;
   sortBookshelf: (params: { taskId: number, genre: BookGenre }) => void;
   sortLostZone: (params: { taskId: number, amount: number }) => void;
+  completeBookPurchase: (params: { amount: number }) => void;
 }
 
 
@@ -486,7 +488,18 @@ Rune.initLogic({
         return processCompletedTask(game, playerId, task);
       }
       Rune.invalidAction();
-    }
+    },
+
+    completeBookPurchase: ({ amount }, { game, playerId }) => {
+      const tasks = game.tasks;
+      for (const i of tasks.keys()) {
+        const task = tasks[i] as BookPurchase;
+        if (task.amount > amount) { continue }
+        tasks.splice(i, 1);
+        return processCompletedTask(game, playerId, task);
+      }
+      Rune.invalidAction();
+    },
   },
 
   events: {

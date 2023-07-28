@@ -8,7 +8,7 @@ interface IconLabelProps {
 function IconLabel({icon, label}: IconLabelProps): JSX.Element {
   return (
     <div className="icon-label">
-      <span className="icon">{icon}</span>
+      <img className="icon" src={icon} />
       <span className="label">{label}</span>
     </div>
   );

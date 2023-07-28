@@ -28,7 +28,7 @@ function TaskNotification({type, timer}: TaskNotificationProps): JSX.Element {
       }}
       transition={{ delay: 0.1 }}
       >
-      <div className="icon">{type}</div>
+      <img className="icon" src={type} />
       <ProgressBar value={timer} maximum={maxTime}></ProgressBar>
     </motion.div>
   );
