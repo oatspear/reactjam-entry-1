@@ -111,6 +111,7 @@ function newSortBooksByGenre(id: number): SortByGenre {
   for (let i = 0; i < 4; ++i) {
     const genre = (r % NUM_GENRES) as BookGenre;
     books.push(genre);
+    r = r >> 1;
   }
   return {
     id,
@@ -266,7 +267,7 @@ function generateNewTasks(game: GameState): void {
   // use sorted insertion based on remaining time
   const id = ++game.generatedTasks;
   const timeout = 10 - numPlayers + 1;
-  let amount = randomInt() % 3 + 1;
+  const amount = randomInt() % 3 + 1;
   addNewTask(game, newBookPurchase(id, timeout, amount));
   // const t = (r * 2) | 0;
   // switch (t) {
@@ -291,11 +292,12 @@ function processCompletedTask(game: GameState, playerId: string, task: Task): vo
 
 function processFailedTask(game: GameState, task: Task): void {
   switch (task.type) {
-    case TASK_TYPE_BOOK_PURCHASE:
+    case TASK_TYPE_BOOK_PURCHASE: {
       // all books the client was holding must now be put back on shelves
       const lostBooks = newSortBooksByGenre(++game.generatedTasks);
       game.lostZone.push(lostBooks);
       break;
+    }
   }
 }
 
