@@ -402,9 +402,9 @@ declare global {
 
 
 type GameActions = {
-  completeTask: (params: { id: number }) => void;
-  sortBookshelf: (params: { genre: BookGenre }) => void;
-  sortLostZone: (params: { amount: number }) => void;
+  completeTask: (params: { taskId: number }) => void;
+  sortBookshelf: (params: { taskId: number, genre: BookGenre }) => void;
+  sortLostZone: (params: { taskId: number, amount: number }) => void;
 }
 
 
@@ -449,27 +449,41 @@ Rune.initLogic({
   },
 
   actions: {
-    completeTask: ({ id }, { game, playerId }) => {
-      for (const i of game.tasks.keys()) {
-        const task = game.tasks[i];
-        if (task.id !== id) { continue }
-        game.tasks.splice(i, 1);
+    completeTask: ({ taskId }, { game, playerId }) => {
+      const tasks = game.tasks;
+      for (const i of tasks.keys()) {
+        const task = tasks[i];
+        if (task.id !== taskId) { continue }
+        tasks.splice(i, 1);
         return processCompletedTask(game, playerId, task);
       }
       Rune.invalidAction();
     },
 
-    sortBookshelf: ({ genre }, { game, playerId }) => {
+    sortBookshelf: ({ taskId, genre }, { game, playerId }) => {
       for (const shelf of game.bookshelves) {
         if (shelf.genre != genre) { continue }
-        return processCompletedTask(game, playerId, shelf.sortingTasks[0]);
+
+        const tasks = shelf.sortingTasks;
+        for (const i of tasks.keys()) {
+          const task = tasks[i];
+          if (task.id !== taskId) { continue }
+          tasks.splice(i, 1);
+          return processCompletedTask(game, playerId, task);
+        }
+        break;
       }
       Rune.invalidAction();
     },
 
-    sortLostZone: ({ amount }, { game, playerId }) => {
-      if (game.lostZone[0].books.length >= amount) {
-        return processCompletedTask(game, playerId, game.lostZone[0]);
+    sortLostZone: ({ taskId, amount }, { game, playerId }) => {
+      const tasks = game.lostZone;
+      for (const i of tasks.keys()) {
+        const task = tasks[i];
+        if (task.id !== taskId) { continue }
+        if (task.books.length < amount) { Rune.invalidAction(); }
+        tasks.splice(i, 1);
+        return processCompletedTask(game, playerId, task);
       }
       Rune.invalidAction();
     }
