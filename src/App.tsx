@@ -29,18 +29,28 @@ function App(): JSX.Element {
 
   function handleClick() {}
 
-  // <BgInterface game={game} setCurrentTask={setCurrentTask} />
+  function handleShelfClick(i: number): void {
+    const shelf = game?.bookshelves[i];
+    if (shelf == null) { return }
+    if (shelf.sortingTasks.length === 0) { return }
+    setCurrentTask(shelf.sortingTasks[0]);
+  }
+
+  function handleCashierClick(): void {
+    if (!game?.tasks.length) { return }
+    setCurrentTask(game.tasks[0]);
+  }
 
   return (
     <>
       <HUD notifications={game.tasks} score={game.score} timer={game.timer} />
 
       <div className="bg-interface">
-        <BookShelf className={"bookshelf-one"} handleClick={handleClick} />
-        <BookShelf className={"bookshelf-two"} handleClick={handleClick}/>
-        <BookShelf className={"bookshelf-three"} handleClick={handleClick}/>
+        <BookShelf className={"bookshelf-one"} handleClick={() => handleShelfClick(0)} />
+        <BookShelf className={"bookshelf-two"} handleClick={() => handleShelfClick(1)}/>
+        <BookShelf className={"bookshelf-three"} handleClick={() => handleShelfClick(2)}/>
         <BookPile className={"book-pile"} handleClick={handleClick} />
-        <Cashier className={"cashier"} handleClick={handleClick} />
+        <Cashier className={"cashier"} handleClick={handleCashierClick} />
         <Person className={"person"} handleClick={handleClick} />
         <Person2 className={"person"} handleClick={handleClick} />
       </div>
