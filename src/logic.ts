@@ -190,7 +190,6 @@ function newBookShelf(genre: BookGenre): Bookshelf {
 
 
 export interface GameState {
-  count: number;
   // General properties
   players: Record<string, PlayerState>;
   score: number;
@@ -416,7 +415,6 @@ Rune.initLogic({
 
   setup: (allPlayerIds: Array<string>): GameState => {
     const game: GameState = {
-      count: 0,
       players: {},
       score: 0,
       timer: 300,
