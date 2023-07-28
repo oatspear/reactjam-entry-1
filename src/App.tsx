@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import { GameState, Task } from "./logic.ts";
 import HUD from "./components/HUD.tsx";
-import BgInterface from "./components/BgInterface.tsx";
 import BookShelf from "./components/interface/Bookshelf.tsx";
 import Cashier from "./components/interface/Cashier.tsx";
 import BookPile from "./components/interface/BookPile.tsx";
@@ -28,17 +27,20 @@ function App(): JSX.Element {
     return <div>Loading...</div>;
   }
 
+  function handleClick() {}
+
+  // <BgInterface game={game} setCurrentTask={setCurrentTask} />
+
   return (
     <>
       <HUD notifications={game.tasks} score={game.score} timer={game.timer} />
 
-      <!-- <BgInterface game={game} setCurrentTask={setCurrentTask} /> -->
       <div className="bg-interface">
         <BookShelf className={"bookshelf-one"} handleClick={handleClick} />
         <BookShelf className={"bookshelf-two"} handleClick={handleClick}/>
         <BookShelf className={"bookshelf-three"} handleClick={handleClick}/>
         <BookPile className={"book-pile"} handleClick={handleClick} />
-        <Cashier className={"cashier"} />
+        <Cashier className={"cashier"} handleClick={handleClick} />
         <Person className={"person"} handleClick={handleClick} />
         <Person2 className={"person"} handleClick={handleClick} />
       </div>
