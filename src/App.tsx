@@ -7,22 +7,28 @@ import Cashier from "./components/interface/Cashier.tsx";
 import BookPile from "./components/interface/BookPile.tsx";
 import Person from "./components/interface/Person.tsx";
 import Person2 from "./components/interface/Person2.tsx";
-import SellBooks from "./components/actions/SellBooks.tsx";
 import ActionPanel from "./components/actions/ActionPanel.tsx";
+import { Player } from "rune-games-sdk/multiplayer";
+import iconPlaceholder from "./assets/placeholder.png";
 
 
 function App(): JSX.Element {
   const [game, setGame] = useState<GameState>();
   const [myPlayerId, setMyPlayerId] = useState<string | undefined>();
+  const [playerList, setPlayerList] = useState<Array<Player>>([]);
 
   const [currentTask, setCurrentTask] = useState<TaskType>(TASK_TYPE_NONE);
 
   useEffect(() => {
     Rune.initClient({
-      onChange: ({ newGame, yourPlayerId }) => {
-        // unused param: oldGame
+      onChange: ({ newGame, yourPlayerId, players }) => {
+        // unused param: olgGame
+        // unused param: action
+        // unused param: event
         setMyPlayerId(yourPlayerId);
         setGame(newGame);
+        // update players
+        setPlayerList(Object.keys(players).sort().map(k => players[k]));
       },
     });
   }, []);
@@ -71,7 +77,16 @@ function App(): JSX.Element {
       {
         currentTask != TASK_TYPE_NONE
         ? <ActionPanel game={game} taskType={currentTask} cancelTask={cancelTask} />
-        : "players"
+        : (
+          <div className="player-list">
+            { playerList.map(player => (
+              <div className="player">
+                <img src={iconPlaceholder} />
+                <img className="avatar" src={player.avatarUrl} />
+              </div>
+            ))}
+          </div>
+        )
       }
     </>
   );
