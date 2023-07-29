@@ -1,0 +1,72 @@
+.task-handler.sort-by-author {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
+.sort-by-author .book-list,
+.sort-by-author .drop-list {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2vw;
+}
+
+.sort-by-author .book-list > .item,
+.sort-by-author .drop-list > .item {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.sort-by-author .label {
+  margin: 0;
+  font-size: large;
+  font-weight: bold;
+  user-select: none;
+  pointer-events: none;
+  width: 2em;
+  text-align: center;
+}
+
+.sort-by-author .book,
+.sort-by-author .drop {
+  width: 20vw;
+  height: 20vw;
+}
+
+.sort-by-author .book > img,
+.sort-by-author .drop > img,
+.sort-by-author .drop > .placeholder {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.sort-by-author .drop > .placeholder {
+  outline: 1px dashed slategray;
+}
+
+.sort-by-author > .filler {
+  flex: 1;
+  opacity: 0.5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.sort-by-author > .filler > img {
+  width: 10vw;
+  height: 10vw;
+  /* animation-iteration-count: infinite; */
+  position: relative;
+  left: -5vw;
+  pointer-events: none;
+}
+
+.sort-by-author > .filler > p {
+  pointer-events: none;
+}

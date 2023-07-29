@@ -5,17 +5,20 @@ import { motion } from "framer-motion";
 
 interface TaskNotificationProps {
   type: string;
-  timer: number;
+  timeout: number;
+  elapsed: number;
 }
 
-function TaskNotification({type, timer}: TaskNotificationProps): JSX.Element {
-  const [maxTime, setMaxTime] = useState(timer);
+function TaskNotification({type, timeout, elapsed}: TaskNotificationProps): JSX.Element {
+  // const [maxTime, setMaxTime] = useState(timer);
 
-  useEffect(() => {
-    setMaxTime(timer);
-  }, []);  // Empty dependencies (runs only once)
+  // useEffect(() => {
+  //   setMaxTime(timer);
+  // }, []);  // Empty dependencies (runs only once)
 
   // const nodeRef = useRef(null);
+
+  const timer = timeout - elapsed;
 
   return (
     <motion.div className="notification"
@@ -29,7 +32,7 @@ function TaskNotification({type, timer}: TaskNotificationProps): JSX.Element {
       transition={{ delay: 0.1 }}
       >
       <img className="icon" src={type} />
-      <ProgressBar value={timer} maximum={maxTime}></ProgressBar>
+      <ProgressBar value={timer} maximum={timeout}></ProgressBar>
     </motion.div>
   );
 }

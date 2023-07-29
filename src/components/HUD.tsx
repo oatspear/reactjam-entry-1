@@ -3,10 +3,11 @@ import IconLabel from "./IconLabel";
 import TaskNotification from "./TaskNotification";
 import "animate.css";
 import { AnimatePresence } from "framer-motion";
-import { Task } from "../logic";
+import { GAME_TIME_SECONDS, TASK_TYPE_BOOK_PURCHASE, TASK_TYPE_BOOK_SORT_AUTHOR, Task } from "../logic";
 import iconScore from "../assets/score.png";
 import iconClock from "../assets/clock.png";
 import iconBag from "../assets/bag.png";
+import iconBooks from "../assets/books.png";
 
 function secsToLabel(totalSeconds: number): string {
   const mins = (totalSeconds / 60) | 0;
@@ -23,6 +24,7 @@ interface HUDProps {
 
 
 function HUD({notifications, score, timer}: HUDProps): JSX.Element {
+  const now = GAME_TIME_SECONDS - timer;
 
   return (
     <div className="hud">
@@ -34,7 +36,18 @@ function HUD({notifications, score, timer}: HUDProps): JSX.Element {
       <AnimatePresence>
         {
           notifications.map(task => {
-          return <TaskNotification type={iconBag} timer={task.timer} key={task.id}></TaskNotification>
+            const timeout = task.endsAt - task.createdAt;
+            const elapsed = now - task.createdAt;
+            let ico = iconScore;
+            switch (task.type) {
+              case TASK_TYPE_BOOK_PURCHASE:
+                ico = iconBag;
+                break;
+              case TASK_TYPE_BOOK_SORT_AUTHOR:
+                ico = iconBooks;
+                break;
+            }
+            return <TaskNotification key={task.id} type={ico} timeout={timeout} elapsed={elapsed} />
           })
         }
         </AnimatePresence>

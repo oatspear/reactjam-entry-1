@@ -1,11 +1,30 @@
-import person from '../../assets/person.png';
+import person1 from '../../assets/person.png';
+import person2 from '../../assets/person2.png';
 
-function Person ({ className, handleClick }) {
+
+interface PersonProps {
+  which: number;
+}
+
+
+function Person({ which }: PersonProps): JSX.Element {
+  if (which === 1) {
     return (
-        <div className={className} onClick={handleClick}>
-            <img src={person} />
-        </div>
+      <div className='person'>
+        <img src={person1} />
+      </div>
     )
+  }
+
+  if (which === 2) {
+    return (
+      <div className='person'>
+        <img src={person2} />
+      </div>
+    )
+  }
+
+  return <></>
 }
 
 export default Person;

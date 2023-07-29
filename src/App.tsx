@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import { BookPurchase, GameState, TASK_TYPE_BOOK_PURCHASE, TASK_TYPE_BOOK_SORT_AUTHOR, TASK_TYPE_NONE, TaskType } from "./logic.ts";
+import { GameState, TASK_TYPE_BOOK_PURCHASE, TASK_TYPE_BOOK_SORT_AUTHOR, Task } from "./logic.ts";
 import HUD from "./components/HUD.tsx";
 import BookShelf from "./components/interface/Bookshelf.tsx";
 import Cashier from "./components/interface/Cashier.tsx";
@@ -17,7 +17,8 @@ function App(): JSX.Element {
   const [myPlayerId, setMyPlayerId] = useState<string | undefined>();
   const [playerList, setPlayerList] = useState<Array<Player>>([]);
 
-  const [currentTask, setCurrentTask] = useState<TaskType>(TASK_TYPE_NONE);
+  const [currentTask, setCurrentTask] = useState<Task | undefined>();
+  const [taskArgument, setTaskArgument] = useState<number>(0);
 
   useEffect(() => {
     Rune.initClient({
@@ -39,23 +40,37 @@ function App(): JSX.Element {
 
   function handleClick() {}
 
-  function handleShelfClick(e: React.MouseEvent | React.TouchEvent, i: number): void {
+  function handleShelfClick(e: React.MouseEvent | React.TouchEvent, g: number): void {
     e.stopPropagation();
-    const shelf = game?.bookshelves[i];
+    if (game == null) { return }
+    const shelf = game.bookshelves[g];
     if (shelf == null) { return }
-    if (shelf.sortingTasks.length === 0) { return }
-    setCurrentTask(TASK_TYPE_BOOK_SORT_AUTHOR);
+    const n = game.tasks.length;
+    for (let i = n-1; i >= 0; --i) {
+      const task = game.tasks[i];
+      if (task.type === TASK_TYPE_BOOK_SORT_AUTHOR) {
+        setCurrentTask(task);
+        setTaskArgument(g);
+        return;
+      }
+    }
   }
 
   function handleCashierClick(e: React.MouseEvent | React.TouchEvent): void {
     e.stopPropagation();
-    const n = game?.tasks.length;
-    if (!n) { return }
-    setCurrentTask(TASK_TYPE_BOOK_PURCHASE);
+    if (game == null) { return }
+    const n = game.tasks.length;
+    for (let i = n-1; i >= 0; --i) {
+      const task = game.tasks[i];
+      if (task.type === TASK_TYPE_BOOK_PURCHASE) {
+        setCurrentTask(task);
+        return;
+      }
+    }
   }
 
   function cancelTask() {
-    setCurrentTask(TASK_TYPE_NONE);
+    setCurrentTask(undefined);
   }
 
   return (
@@ -63,24 +78,23 @@ function App(): JSX.Element {
       <HUD notifications={game.tasks} score={game.score} timer={game.timer} />
 
       <div className="bg-interface" onClick={cancelTask}>
-        <BookShelf className={"bookshelf-one"} handleClick={e => handleShelfClick(e, 0)} />
-        <BookShelf className={"bookshelf-two"} handleClick={e => handleShelfClick(e, 1)}/>
-        <BookShelf className={"bookshelf-three"} handleClick={e => handleShelfClick(e, 2)}/>
-        <BookPile className={"book-pile"} handleClick={handleClick} />
-        <Cashier className={"cashier"} handleClick={handleCashierClick} />
-        <Person className={"person"} handleClick={handleClick} />
-        <Person2 className={"person"} handleClick={handleClick} />
+        <div className="playable-area">
+          <BookShelf person={1} handleClick={e => handleShelfClick(e, 0)} />
+          <BookShelf person={0} handleClick={e => handleShelfClick(e, 1)}/>
+          <BookShelf person={2} handleClick={e => handleShelfClick(e, 2)}/>
+          <Cashier handleClick={handleCashierClick} />
+        </div>
 
         <footer>Images: Freepik.com</footer>
       </div>
 
       {
-        currentTask != TASK_TYPE_NONE
-        ? <ActionPanel game={game} taskType={currentTask} cancelTask={cancelTask} />
+        currentTask != null
+        ? <ActionPanel game={game} taskType={currentTask.type} cancelTask={cancelTask} arg1={taskArgument} />
         : (
           <div className="player-list">
             { playerList.map(player => (
-              <div className="player">
+              <div className="player" key={player.playerId}>
                 <img src={iconPlaceholder} />
                 <img className="avatar" src={player.avatarUrl} />
               </div>

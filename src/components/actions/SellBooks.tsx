@@ -2,7 +2,7 @@
 // Imports
 // -----------------------------------------------------------------------------
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import iconDragDrop from "../../assets/dragdrop.png";
 import iconBook1 from "../../assets/book1.png";
 // import iconBook2 from "../../assets/book2.png";
@@ -47,12 +47,11 @@ function SellBooks({ amount, cancelTask }: SellBooksProps): JSX.Element {
   if (remaining <= 0) {
     // setHandledBooks(0);
     // Rune.actions.completeBookPurchase({ amount });
-    cancelTask();
+    // cancelTask();
 
-    // className="animate__animated animate__tada"
     return (
       <div onClick={cancelTask}>
-        <h1>Done!</h1>
+        <h1 className="animate__animated animate__tada">Done!</h1>
       </div>
     )
   }
@@ -65,6 +64,7 @@ function SellBooks({ amount, cancelTask }: SellBooksProps): JSX.Element {
     setHandledBooks(done);
     if (done >= amount) {
       Rune.actions.completeBookPurchase({ amount });
+      cancelTask();
     }
   }
 

@@ -2,15 +2,14 @@ import cashier from '../../assets/cashier.png';
 
 
 interface CashierProps {
-  className: string;
   handleClick: (e: React.MouseEvent | React.TouchEvent) => void;
 }
 
 
-function Cashier ({ className, handleClick }: CashierProps): JSX.Element {
+function Cashier ({ handleClick }: CashierProps): JSX.Element {
   return (
-    <div className={className} onClick={handleClick}>
-      <img src={cashier} />
+    <div className="cashier">
+      <img src={cashier} className='animate__animated animate__pulse' onClick={handleClick} />
     </div>
   )
 }

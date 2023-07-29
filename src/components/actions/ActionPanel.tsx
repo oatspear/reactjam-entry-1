@@ -4,9 +4,9 @@
 
 import "./ActionPanel.css";
 import iconCancel from "../../assets/cancel.png";
-import { TASK_TYPE_BOOK_PURCHASE, TaskType } from "../../logic";
-import { GameState } from "rune-games-sdk/multiplayer";
+import { BookGenre, GameState, NUM_BOOKS_PER_PURCHASE, TASK_TYPE_BOOK_PURCHASE, TASK_TYPE_BOOK_SORT_AUTHOR, TaskType } from "../../logic";
 import SellBooks from "./SellBooks";
+import SortByAuthor from "./SortByAuthor";
 
 
 // -----------------------------------------------------------------------------
@@ -15,16 +15,32 @@ import SellBooks from "./SellBooks";
 
 
 function handleBookPurchase(game: GameState, cancelTask: () => void): JSX.Element {
-  if (game.tasks.length === 0) {
+  const tasks = game.tasks.filter(task => task.type === TASK_TYPE_BOOK_PURCHASE);
+  if (tasks.length === 0) {
     return (
       <div onClick={cancelTask}>
-        <h1>Time's Up!</h1>
+        <h1>Time&apos;s Up!</h1>
       </div>
     )
   }
 
-  const amount = game.tasks[0].amount;
-  return <SellBooks amount={amount} cancelTask={cancelTask} />
+  return <SellBooks amount={NUM_BOOKS_PER_PURCHASE} cancelTask={cancelTask} />
+}
+
+
+function handleSortByAuthor(game: GameState, i: number, cancelTask: () => void): JSX.Element {
+  const shelf = game.bookshelves[i];
+  // if (!shelf.sortingTasks.length) {
+  //   return (
+  //     <div onClick={cancelTask}>
+  //       <h1>All done!</h1>
+  //     </div>
+  //   )
+  // }
+
+  const genre: BookGenre = shelf.genre;
+  const authors: string[] = shelf.sorting;
+  return <SortByAuthor genre={genre} authors={authors} cancelTask={cancelTask} />
 }
 
 
@@ -37,11 +53,12 @@ function handleBookPurchase(game: GameState, cancelTask: () => void): JSX.Elemen
 interface ActionPanelProps {
   game: GameState;
   taskType: TaskType;
+  arg1: number;
   cancelTask: () => void;
 }
 
 
-function ActionPanel({ game, taskType, cancelTask }: ActionPanelProps): JSX.Element {
+function ActionPanel({ game, taskType, arg1, cancelTask }: ActionPanelProps): JSX.Element {
   // const [success, setSuccess] = useState<boolean>(false);
 
   return (
@@ -55,6 +72,8 @@ function ActionPanel({ game, taskType, cancelTask }: ActionPanelProps): JSX.Elem
       {
         taskType === TASK_TYPE_BOOK_PURCHASE
         ? handleBookPurchase(game, cancelTask)
+        : taskType === TASK_TYPE_BOOK_SORT_AUTHOR
+        ? handleSortByAuthor(game, arg1, cancelTask)
         : `Handling task of type ${taskType}`
       }
     </div>

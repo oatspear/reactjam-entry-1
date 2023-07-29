@@ -1,16 +1,18 @@
 import bookshelf from "../../assets/bookshelf.png";
+import Person from "./Person";
 
 
 interface BookShelfProps {
-  className: string;
+  person: number;
   handleClick: (e: React.MouseEvent | React.TouchEvent) => void;
-};
+}
 
 
-function BookShelf({ className, handleClick }: BookShelfProps): JSX.Element {
+function BookShelf({ person, handleClick }: BookShelfProps): JSX.Element {
   return (
-    <div className={className} onClick={handleClick}>
-      <img src={bookshelf} />
+    <div className="bookshelf">
+      <img src={bookshelf} className="animate__animated animate__pulse" onClick={handleClick} />
+      <Person which={person} />
     </div>
   )
 }
