@@ -3,7 +3,7 @@ import bookshelf from "../../assets/bookshelf.png";
 
 interface BookShelfProps {
   className: string;
-  handleClick: () => void;
+  handleClick: (e: React.MouseEvent | React.TouchEvent) => void;
 };
 
 

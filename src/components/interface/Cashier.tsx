@@ -3,7 +3,7 @@ import cashier from '../../assets/cashier.png';
 
 interface CashierProps {
   className: string;
-  handleClick: () => void;
+  handleClick: (e: React.MouseEvent | React.TouchEvent) => void;
 }
 
 

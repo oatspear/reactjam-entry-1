@@ -7,36 +7,6 @@
   background-color: rgb(218, 216, 208);
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-
-.logo.rune:hover {
-  filter: drop-shadow(0 0 2em #a72cebaa);
-}
-
-.action-panel {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background-color: ivory;
-  padding: 8px 1em 3em 1em;
-  border-top: 4px solid burlywood;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
 .bg-interface {
   background-color: rgb(218, 216, 208);
   position: absolute;

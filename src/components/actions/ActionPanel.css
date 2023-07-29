@@ -1,0 +1,42 @@
+.action-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: whitesmoke;
+  padding: 0 1em 1em 1em;
+  border-top: 4px solid burlywood;
+}
+
+.action-panel > .button-holder {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  height: 1em;
+  overflow: visible;
+  flex: 0;
+}
+
+.action-panel > .button-holder > button {
+  background: none;
+  padding: 4px;
+  position: relative;
+  width: 16vw;
+  height: 16vw;
+  top: -8vw;
+  cursor: pointer;
+  border: 4px solid burlywood;
+  background-color: whitesmoke;
+}
+
+.action-panel > .button-holder > button:hover,
+.action-panel > .button-holder > button:active,
+.action-panel > .button-holder > button:focus {
+  background-color: lightyellow;
+}
+
+.action-panel > .button-holder > button > img {
+  width: 100%;
+  height: 100%;
+}

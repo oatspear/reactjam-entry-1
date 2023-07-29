@@ -8,10 +8,11 @@ import type { RuneClient } from "rune-games-sdk/multiplayer";
 // Constants
 // -----------------------------------------------------------------------------
 
-export type TaskType = 1 | 2 | 3;
+export type TaskType = 0 | 1 | 2 | 3;
 
 // function constTaskTypeBookPurchase(): TaskType { return 1 }
 
+export const TASK_TYPE_NONE: TaskType = 0;
 export const TASK_TYPE_BOOK_PURCHASE: TaskType = 1;
 export const TASK_TYPE_BOOK_SORT_GENRE: TaskType = 2;
 export const TASK_TYPE_BOOK_SORT_AUTHOR: TaskType = 3;
