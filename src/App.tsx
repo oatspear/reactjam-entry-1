@@ -12,7 +12,7 @@ import { playSound } from "./sounds.ts";
 
 function App(): JSX.Element {
   const [game, setGame] = useState<GameState>();
-  const [myPlayerId, setMyPlayerId] = useState<string | undefined>();
+  // const [myPlayerId, setMyPlayerId] = useState<string | undefined>();
   const [playerList, setPlayerList] = useState<Array<Player>>([]);
 
   const [currentTask, setCurrentTask] = useState<Task | undefined>();
@@ -20,10 +20,11 @@ function App(): JSX.Element {
 
   useEffect(() => {
     Rune.initClient({
-      onChange: ({ newGame, oldGame, yourPlayerId, players }) => {
+      onChange: ({ newGame, oldGame, players }) => {
         // unused param: action
         // unused param: event
-        setMyPlayerId(yourPlayerId);
+        // unused param: yourPlayerId
+        // setMyPlayerId(yourPlayerId);
         setGame(newGame);
         // update players
         setPlayerList(Object.keys(players).sort().map(k => players[k]));
