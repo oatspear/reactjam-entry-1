@@ -4,9 +4,6 @@ import { GameState, TASK_TYPE_BOOK_PURCHASE, TASK_TYPE_BOOK_SORT_AUTHOR, Task } 
 import HUD from "./components/HUD.tsx";
 import BookShelf from "./components/interface/Bookshelf.tsx";
 import Cashier from "./components/interface/Cashier.tsx";
-import BookPile from "./components/interface/BookPile.tsx";
-import Person from "./components/interface/Person.tsx";
-import Person2 from "./components/interface/Person2.tsx";
 import ActionPanel from "./components/actions/ActionPanel.tsx";
 import { Player } from "rune-games-sdk/multiplayer";
 import iconPlaceholder from "./assets/placeholder.png";
@@ -37,8 +34,6 @@ function App(): JSX.Element {
   if (!game) {
     return <div>Loading...</div>;
   }
-
-  function handleClick() {}
 
   function handleShelfClick(e: React.MouseEvent | React.TouchEvent, g: number): void {
     e.stopPropagation();
