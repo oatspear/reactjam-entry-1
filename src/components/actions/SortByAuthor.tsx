@@ -34,7 +34,7 @@ function isSameOrder(current: Array<string | undefined>, expected: string[]): bo
 
 
 function emptyArray(length: number): Array<undefined> {
-  var a = [];
+  const a = [];
   for (let i = length; i > 0; --i) { a.push(undefined) }
   return a;
 }

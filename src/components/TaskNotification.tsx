@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import "./TaskNotification.css";
 import ProgressBar from "./ProgressBar";
 import { motion } from "framer-motion";
