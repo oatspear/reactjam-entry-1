@@ -7,6 +7,7 @@ import Cashier from "./components/interface/Cashier.tsx";
 import ActionPanel from "./components/actions/ActionPanel.tsx";
 import { Player } from "rune-games-sdk/multiplayer";
 import iconPlaceholder from "./assets/placeholder.png";
+import { playSound } from "./sounds.ts";
 
 
 function App(): JSX.Element {
@@ -19,14 +20,27 @@ function App(): JSX.Element {
 
   useEffect(() => {
     Rune.initClient({
-      onChange: ({ newGame, yourPlayerId, players }) => {
-        // unused param: olgGame
+      onChange: ({ newGame, oldGame, yourPlayerId, players }) => {
         // unused param: action
         // unused param: event
         setMyPlayerId(yourPlayerId);
         setGame(newGame);
         // update players
         setPlayerList(Object.keys(players).sort().map(k => players[k]));
+        // check for score
+        if (newGame.score > oldGame.score) {
+          playSound("score");
+        } else {
+          if (newGame.tasks.length < oldGame.tasks.length) {
+            playSound("fail");
+          } else {
+            if (newGame.tasks.length > 0 && oldGame.tasks.length > 0) {
+              if (newGame.tasks[0].id != oldGame.tasks[0].id) {
+                playSound("fail");
+              }
+            }
+          }
+        }
       },
     });
   }, []);
@@ -80,7 +94,7 @@ function App(): JSX.Element {
           <Cashier handleClick={handleCashierClick} />
         </div>
 
-        <footer>Images: Freepik.com</footer>
+        <footer>Images: Freepik.com; Sounds: Envato Elements</footer>
       </div>
 
       {

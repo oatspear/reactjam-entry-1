@@ -10,6 +10,7 @@ import iconBook1 from "../../assets/book1.png";
 // import iconBook4 from "../../assets/book4.png";
 import iconBag from "../../assets/bag.png";
 import "./SellBooks.css";
+import { playSound } from "../../sounds";
 
 
 // -----------------------------------------------------------------------------
@@ -62,6 +63,7 @@ function SellBooks({ amount, cancelTask }: SellBooksProps): JSX.Element {
     // const data = e.dataTransfer.getData("text/plain");
     const done = handledBooks + 1;
     setHandledBooks(done);
+    playSound("woosh");
     if (done >= amount) {
       Rune.actions.completeBookPurchase({ amount });
       cancelTask();

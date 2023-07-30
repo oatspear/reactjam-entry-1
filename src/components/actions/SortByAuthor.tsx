@@ -10,6 +10,7 @@ import iconBook3 from "../../assets/book3.png";
 // import iconBook4 from "../../assets/book4.png";
 import "./SortByAuthor.css";
 import { BookGenre, GENRE_FANTASY, GENRE_POETRY } from "../../logic";
+import { playSound } from "../../sounds";
 
 
 // -----------------------------------------------------------------------------
@@ -86,6 +87,7 @@ function SortByAuthor({ genre, authors, cancelTask }: SortByAuthorProps): JSX.El
     }
     newOrder[i] = author;
     setHandledBooks(newOrder);
+    playSound("thump");
     if (isSameOrder(newOrder, correctOrder)) {
       const sorted: string[] = newOrder as string[];
       Rune.actions.sortBookshelf({ genre, sorted });
