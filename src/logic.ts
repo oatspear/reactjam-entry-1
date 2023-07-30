@@ -43,7 +43,6 @@ function allBookGenres(): Array<BookGenre> {
 // const DEFAULT_TASK_ID: number = 0;
 const MAX_PENDING_TASKS: number = 10;
 const SHELF_CAPACITY: number = 30;
-const DEFAULT_BOOK_SORT_TIMER: number = 5;
 const MAX_32BIT_INT = 2147483647;
 
 export const NUM_BOOKS_PER_PURCHASE: number = 3;
@@ -130,10 +129,10 @@ function newSortBooksByAuthor(id: number, createdAt: number, endsAt: number): Ta
 }
 
 
-function taskTimerBasedOnPlayers(game: GameState, basis: number): number {
-  const t = basis - Object.keys(game.players).length + 1;
-  return t <= 0 ? 1 : t;
-}
+// function taskTimerBasedOnPlayers(game: GameState, basis: number): number {
+//   const t = basis - Object.keys(game.players).length + 1;
+//   return t <= 0 ? 1 : t;
+// }
 
 
 // -----------------------------------------------------------------------------
