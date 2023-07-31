@@ -2,7 +2,9 @@
 // Imports
 // -----------------------------------------------------------------------------
 
-import React, { useState } from "react";
+import { useState } from "react";
+import {DndContext, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors} from '@dnd-kit/core';
+import {CSS} from '@dnd-kit/utilities';
 import iconDragDrop from "../../assets/dragdrop.png";
 import iconBook1 from "../../assets/book1.png";
 import iconBook2 from "../../assets/book2.png";
@@ -18,14 +20,60 @@ import { playSound } from "../../sounds";
 // -----------------------------------------------------------------------------
 
 
-function onDragBook(e: React.DragEvent<HTMLDivElement>, author: string) {
-  e.dataTransfer.setData("text/plain", author);
-  e.dataTransfer.dropEffect = "move";
+interface DraggableProps {
+  index: number;
+  author: string;
+  iconSrc: string;
+  children?: any;
 }
 
 
-function allowDrop(e: React.DragEvent<HTMLDivElement>) {
-  e.preventDefault();
+function Draggable(props: DraggableProps): JSX.Element {
+  const {attributes, listeners, setNodeRef, transform} = useDraggable({
+    id: `book-being-sorted-${props.index}`,
+    data: {
+      author: props.author,
+    },
+  });
+  const style = {
+    // Outputs `translate3d(x, y, 0)`
+    transform: CSS.Translate.toString(transform),
+  };
+
+  return (
+    <div className="book" ref={setNodeRef} style={style} {...listeners} {...attributes}>
+      <img className="animate__animated animate__pulse" src={props.iconSrc} />
+      {props.children}
+    </div>
+  )
+}
+
+
+interface DroppableProps {
+  index: number;
+  author: string | undefined;
+  iconSrc: string;
+}
+
+
+function Droppable(props: DroppableProps): JSX.Element {
+  const {isOver, setNodeRef} = useDroppable({
+    id: `author-sorting-slot-${props.index}`,
+    data: {
+      index: props.index,
+    },
+  });
+  const style = {
+    opacity: isOver || !!props.author ? 1 : 0.5,
+  };
+
+  return (
+    <div className="drop" ref={setNodeRef} style={style}>{
+      props.author != null
+      ? <img className="animate__animated animate__pulse" src={props.iconSrc} />
+      : <div className="placeholder"></div>
+    }</div>
+  );
 }
 
 
@@ -75,9 +123,11 @@ function SortByAuthor({ genre, authors, cancelTask }: SortByAuthorProps): JSX.El
   );
 
 
-  const onDropBook = (e: React.DragEvent<HTMLDivElement>, i: number) => {
-    e.preventDefault();
-    const author = e.dataTransfer.getData("text/plain");
+  function handleDragEnd(event: any) {
+    const {active, over} = event;
+    if (over == null) { return }
+
+    const author = active.data.current.author;
     const newOrder = handledBooks.slice();
     for (const k of newOrder.keys()) {
       if (newOrder[k] === author) {
@@ -85,50 +135,46 @@ function SortByAuthor({ genre, authors, cancelTask }: SortByAuthorProps): JSX.El
         break;
       }
     }
-    newOrder[i] = author;
+    newOrder[over.data.current.index] = author;
     setHandledBooks(newOrder);
     playSound("thump");
     if (isSameOrder(newOrder, correctOrder)) {
       const sorted: string[] = newOrder as string[];
       Rune.actions.sortBookshelf({ genre, sorted });
       cancelTask();
-      console.log("close task");
     }
   }
 
+
+  const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor));
+
   return (
-    <div className="task-handler sort-by-author">
-      <div className="book-list">{
-        authors.map((author, i) => (
-          <div key={i} className="item">
-            <p className="label">{ author }</p>
-            <div className="book" draggable="true" onDragStart={e => onDragBook(e, author)}>
-              <img className="animate__animated animate__pulse" src={iconSrc} />
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <div className="task-handler sort-by-author">
+        <div className="book-list">{
+          authors.map((author, i) => (
+            <div key={i} className="item">
+              <p className="label">{ author }</p>
+              <Draggable index={i} author={author} iconSrc={iconSrc} />
             </div>
-          </div>
-        ))
-      }
-      </div>
-      <div className="filler">
-        <img className="animate__animated animate__slideOutRight" src={iconDragDrop} />
-        <p>A - Z</p>
-      </div>
-      <div className="drop-list">{
-        handledBooks.map((author, i) => (
-          <div key={i} className="item">
-            <div className="drop" onDrop={e => onDropBook(e, i)} onDragOver={allowDrop}>
-              {
-                author != null
-                ? <img className="animate__animated animate__pulse" src={iconSrc} />
-                : <div className="placeholder"></div>
-              }
+          ))
+        }
+        </div>
+        <div className="filler">
+          <img className="animate__animated animate__slideOutRight" src={iconDragDrop} />
+          <p>A - Z</p>
+        </div>
+        <div className="drop-list">{
+          handledBooks.map((author, i) => (
+            <div key={i} className="item">
+              <Droppable index={i} author={author} iconSrc={iconSrc} />
+              <p className="label">{ author || (i+1).toString() }</p>
             </div>
-            <p className="label">{ author || (i+1).toString() }</p>
-          </div>
-        ))
-      }
+          ))
+        }
+        </div>
       </div>
-    </div>
+    </DndContext>
   );
 }
 

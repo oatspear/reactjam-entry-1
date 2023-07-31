@@ -2,7 +2,9 @@
 // Imports
 // -----------------------------------------------------------------------------
 
-import React, { useState } from "react";
+import { useState } from "react";
+import {DndContext, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors} from '@dnd-kit/core';
+import {CSS} from '@dnd-kit/utilities';
 import iconDragDrop from "../../assets/dragdrop.png";
 import iconBook1 from "../../assets/book1.png";
 // import iconBook2 from "../../assets/book2.png";
@@ -18,14 +20,37 @@ import { playSound } from "../../sounds";
 // -----------------------------------------------------------------------------
 
 
-function onDragBook(e: React.DragEvent<HTMLDivElement>) {
-  // e.dataTransfer.setData("text/plain", "sale");
-  e.dataTransfer.dropEffect = "move";
+function Draggable(props: any): JSX.Element {
+  const {attributes, listeners, setNodeRef, transform} = useDraggable({
+    id: "book-being-sold",
+  });
+  const style = {
+    // Outputs `translate3d(x, y, 0)`
+    transform: CSS.Translate.toString(transform),
+  };
+
+  return (
+    <div className="book" ref={setNodeRef} style={style} {...listeners} {...attributes}>
+      <img className="animate__animated animate__pulse" src={iconBook1} />
+      {props.children}
+    </div>
+  )
 }
 
 
-function allowDrop(e: React.DragEvent<HTMLDivElement>) {
-  e.preventDefault();
+function Droppable(): JSX.Element {
+  const {isOver, setNodeRef} = useDroppable({
+    id: "book-sale-bag",
+  });
+  const style = {
+    opacity: isOver ? 1 : 0.5,
+  };
+
+  return (
+    <div className="bag" ref={setNodeRef} style={style}>
+      <img className="animate__animated animate__pulse" src={iconBag} />
+    </div>
+  );
 }
 
 
@@ -58,39 +83,39 @@ function SellBooks({ amount, cancelTask }: SellBooksProps): JSX.Element {
   }
 
 
-  const onDropBook = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    // const data = e.dataTransfer.getData("text/plain");
-    const done = handledBooks + 1;
-    setHandledBooks(done);
-    playSound("woosh");
-    if (done >= amount) {
-      Rune.actions.completeBookPurchase({ amount });
-      cancelTask();
+  function handleDragEnd({ over }: { over: any}) {
+    if (over != null) {
+      const done = handledBooks + 1;
+      setHandledBooks(done);
+      playSound("woosh");
+      if (done >= amount) {
+        Rune.actions.completeBookPurchase({ amount });
+        cancelTask();
+      }
     }
   }
+
+  const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor));
 
 
   // <IconLabel icon={iconBooks} label={remaining.toString()} />
   // <IconLabel icon={iconClock} label={timer.toString()} />
   return (
-    <div className="task-handler sell-books">
-      <div className="book-column">
-        <div className="book" draggable="true" onDragStart={onDragBook}>
-          <img className="animate__animated animate__pulse" src={iconBook1} />
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <div className="task-handler sell-books">
+        <div className="book-column">
+          <Draggable />
+          <p>{ remaining }</p>
         </div>
-        <p>{ remaining }</p>
-      </div>
-      <div className="filler">
-        <img className="animate__animated animate__slideOutRight" src={iconDragDrop} />
-      </div>
-      <div className="bag-column">
-        <div className="bag" onDrop={onDropBook} onDragOver={allowDrop}>
-          <img className="animate__animated animate__pulse" src={iconBag} />
+        <div className="filler">
+          <img className="animate__animated animate__slideOutRight" src={iconDragDrop} />
         </div>
-        <p>{ handledBooks }</p>
+        <div className="bag-column">
+          <Droppable />
+          <p>{ handledBooks }</p>
+        </div>
       </div>
-    </div>
+    </DndContext>
   );
 }
 

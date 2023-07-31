@@ -12,6 +12,8 @@
 
 .sell-books .book {
   padding-left: 2.5vw;
+  z-index: 100;
+  touch-action: none;
 }
 
 .sell-books .bag {
