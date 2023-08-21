@@ -97,11 +97,12 @@ function emptyArray(length: number): Array<undefined> {
 interface SortByAuthorProps {
   genre: BookGenre;
   authors: string[];
+  completeTask: (genre: BookGenre, sorted: string[]) => void;
   cancelTask: () => void;
 }
 
 
-function SortByAuthor({ genre, authors, cancelTask }: SortByAuthorProps): JSX.Element {
+function SortByAuthor({ genre, authors, completeTask, cancelTask }: SortByAuthorProps): JSX.Element {
   const correctOrder = authors.slice().sort();
 
   const [handledBooks, setHandledBooks] = useState<Array<string | undefined>>(emptyArray(authors.length));
@@ -140,7 +141,7 @@ function SortByAuthor({ genre, authors, cancelTask }: SortByAuthorProps): JSX.El
     playSound("thump");
     if (isSameOrder(newOrder, correctOrder)) {
       const sorted: string[] = newOrder as string[];
-      Rune.actions.sortBookshelf({ genre, sorted });
+      completeTask( genre, sorted );
       cancelTask();
     }
   }

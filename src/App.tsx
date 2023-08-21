@@ -12,7 +12,7 @@ import { playSound } from "./sounds.ts";
 
 function App(): JSX.Element {
   const [game, setGame] = useState<GameState>();
-  // const [myPlayerId, setMyPlayerId] = useState<string | undefined>();
+  const [myPlayerId, setMyPlayerId] = useState<string | undefined>();
   const [playerList, setPlayerList] = useState<Array<Player>>([]);
 
   const [currentTask, setCurrentTask] = useState<Task | undefined>();
@@ -20,11 +20,11 @@ function App(): JSX.Element {
 
   useEffect(() => {
     Rune.initClient({
-      onChange: ({ newGame, oldGame, players }) => {
+      onChange: ({ newGame, oldGame, yourPlayerId, players }) => {
         // unused param: action
         // unused param: event
-        // unused param: yourPlayerId
-        // setMyPlayerId(yourPlayerId);
+        // unused param: 
+        setMyPlayerId(yourPlayerId);
         setGame(newGame);
         // update players
         setPlayerList(Object.keys(players).sort().map(k => players[k]));
@@ -52,7 +52,8 @@ function App(): JSX.Element {
 
   function handleShelfClick(e: React.MouseEvent | React.TouchEvent, g: number): void {
     e.stopPropagation();
-    if (game == null) { return }
+    if (game == null || myPlayerId == null) { return }
+    if (game.timer <= 0) { return }
     const shelf = game.bookshelves[g];
     if (shelf == null) { return }
     const n = game.tasks.length;
@@ -68,7 +69,8 @@ function App(): JSX.Element {
 
   function handleCashierClick(e: React.MouseEvent | React.TouchEvent): void {
     e.stopPropagation();
-    if (game == null) { return }
+    if (game == null || myPlayerId == null) { return }
+    if (game.timer <= 0) { return }
     const n = game.tasks.length;
     for (let i = n-1; i >= 0; --i) {
       const task = game.tasks[i];

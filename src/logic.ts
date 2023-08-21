@@ -44,6 +44,7 @@ function allBookGenres(): Array<BookGenre> {
 const MAX_PENDING_TASKS: number = 10;
 const SHELF_CAPACITY: number = 30;
 const MAX_32BIT_INT = 2147483647;
+const BASE_TASK_DURATION_SECS = 16;
 
 export const NUM_BOOKS_PER_PURCHASE: number = 3;
 export const GAME_TIME_SECONDS: number = 300;
@@ -186,7 +187,7 @@ function disorganizeShelves(game: GameState): void {
   // use sorted insertion based on remaining time
   game.lastTaskCreatedAt = now;
   const id = ++game.generatedTasks;
-  const timeout = 12 - numPlayers + 1;
+  const timeout = BASE_TASK_DURATION_SECS - numPlayers + 1;
 
   addNewTask(game, newSortBooksByAuthor(id, now, now + timeout));
 }
@@ -231,7 +232,7 @@ function generateNewTasks(game: GameState): void {
   const numPlayers = Object.keys(game.players).length;
   const now = Rune.gameTimeInSeconds();
   const reliefPeriod = (now - game.lastTaskCreatedAt) | 0;
-  const chance = 20 * numPlayers * reliefPeriod;
+  const chance = 22.5 * numPlayers * (reliefPeriod - 1);
   const r = randomInt(game.seed, 100);
   if (r >= chance) { return }
 
@@ -239,10 +240,10 @@ function generateNewTasks(game: GameState): void {
   // use sorted insertion based on remaining time
   game.lastTaskCreatedAt = now;
   const id = ++game.generatedTasks;
-  const timeout = 12 - numPlayers + 1;
+  const timeout = BASE_TASK_DURATION_SECS - numPlayers + 1;
   const endsAt = now + timeout;
 
-  if (r < 60) {
+  if (r < 50) {
     addNewTask(game, newBookPurchase(id, now, endsAt));
   } else {
     addNewTask(game, newSortBooksByAuthor(id, now, endsAt));
@@ -414,12 +415,14 @@ Rune.initLogic({
 
   events: {
     playerJoined: (playerId, { game }) => {
+      if (!playerId) { return }
       game.players[playerId] = newPlayer(playerId);
       // update task timers based on number of players
       // regenerateTaskTimeouts(game);
     },
 
     playerLeft(playerId, { game }) {
+      if (!playerId) { return }
       delete (game as GameState).players[playerId];
       // update task timers based on number of players
       // regenerateTaskTimeouts(game);

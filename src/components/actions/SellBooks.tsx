@@ -61,11 +61,12 @@ function Droppable(): JSX.Element {
 
 interface SellBooksProps {
   amount: number;
+  completeTask: (amount: number) => void;
   cancelTask: () => void;
 }
 
 
-function SellBooks({ amount, cancelTask }: SellBooksProps): JSX.Element {
+function SellBooks({ amount, completeTask, cancelTask }: SellBooksProps): JSX.Element {
   const [handledBooks, setHandledBooks] = useState<number>(0);
 
   const remaining = amount - handledBooks;
@@ -89,7 +90,7 @@ function SellBooks({ amount, cancelTask }: SellBooksProps): JSX.Element {
       setHandledBooks(done);
       playSound("woosh");
       if (done >= amount) {
-        Rune.actions.completeBookPurchase({ amount });
+        completeTask(amount);
         cancelTask();
       }
     }

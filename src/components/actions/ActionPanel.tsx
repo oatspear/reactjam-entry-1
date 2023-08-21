@@ -24,7 +24,13 @@ function handleBookPurchase(game: GameState, cancelTask: () => void): JSX.Elemen
     )
   }
 
-  return <SellBooks amount={NUM_BOOKS_PER_PURCHASE} cancelTask={cancelTask} />
+  const onComplete = (amount: number) => {
+    if (game != null && game.timer > 0) {
+      Rune.actions.completeBookPurchase({ amount });
+    }
+  };
+
+  return <SellBooks amount={NUM_BOOKS_PER_PURCHASE} completeTask={onComplete} cancelTask={cancelTask} />
 }
 
 
@@ -38,9 +44,15 @@ function handleSortByAuthor(game: GameState, i: number, cancelTask: () => void):
   //   )
   // }
 
+  const onComplete = (genre: BookGenre, sorted: string[]) => {
+    if (game != null && game.timer > 0) {
+      Rune.actions.sortBookshelf({ genre, sorted });
+    }
+  };
+
   const genre: BookGenre = shelf.genre;
   const authors: string[] = shelf.sorting;
-  return <SortByAuthor genre={genre} authors={authors} cancelTask={cancelTask} />
+  return <SortByAuthor genre={genre} authors={authors} completeTask={onComplete} cancelTask={cancelTask} />
 }
 
 
